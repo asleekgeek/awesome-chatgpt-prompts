@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { VariableToolbar } from "./variable-toolbar";
+import { VariableWarning } from "./variable-warning";
+import { VariableHint } from "./variable-hint";
 import { ContributorSearch } from "./contributor-search";
+import { PromptBuilder } from "./prompt-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +36,160 @@ import { Badge } from "@/components/ui/badge";
 import { CodeEditor, type CodeEditorHandle } from "@/components/ui/code-editor";
 import { toast } from "sonner";
 import { prettifyJson } from "@/lib/format";
+
+interface MediaFieldProps {
+  form: ReturnType<typeof useForm<PromptFormValues>>;
+  t: (key: string) => string;
+}
+
+function MediaField({ form, t }: MediaFieldProps) {
+  const [storageMode, setStorageMode] = useState<string>("url");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaUrl = form.watch("mediaUrl");
+
+  useEffect(() => {
+    fetch("/api/config/storage")
+      .then((res) => res.json())
+      .then((data) => setStorageMode(data.mode))
+      .catch(() => setStorageMode("url"));
+  }, []);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError(t("fileTooLarge"));
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError(t("invalidFileType"));
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      const result = await response.json();
+      form.setValue("mediaUrl", result.url);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const clearMedia = () => {
+    form.setValue("mediaUrl", "");
+    setUploadError(null);
+  };
+
+  // URL mode: show text input
+  if (storageMode === "url") {
+    return (
+      <FormField
+        control={form.control}
+        name="mediaUrl"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("mediaUrl")}</FormLabel>
+            <FormControl>
+              <Input placeholder={t("mediaUrlPlaceholder")} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
+
+  // Upload mode: show file upload
+  return (
+    <FormField
+      control={form.control}
+      name="mediaUrl"
+      render={() => (
+        <FormItem>
+          <FormLabel>{t("mediaImage")}</FormLabel>
+          <FormControl>
+            <div className="space-y-2">
+              {mediaUrl ? (
+                <div className="relative inline-block">
+                  <img
+                    src={mediaUrl}
+                    alt="Preview"
+                    className="max-h-40 rounded-md border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6"
+                    onClick={clearMedia}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {isUploading ? t("uploading") : t("clickToUpload")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("maxFileSize")}
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                onChange={handleFileSelect}
+                disabled={isUploading}
+              />
+              {uploadError && (
+                <p className="text-sm text-destructive">{uploadError}</p>
+              )}
+            </div>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
 
 const createPromptSchema = (t: (key: string) => string) => z.object({
   title: z.string().min(1, t("titleRequired")).max(200),
@@ -75,9 +232,12 @@ interface PromptFormProps {
   initialContributors?: Contributor[];
   promptId?: string;
   mode?: "create" | "edit";
+  aiGenerationEnabled?: boolean;
+  aiModelName?: string;
+  initialPromptRequest?: string;
 }
 
-export function PromptForm({ categories, tags, initialData, initialContributors = [], promptId, mode = "create" }: PromptFormProps) {
+export function PromptForm({ categories, tags, initialData, initialContributors = [], promptId, mode = "create", aiGenerationEnabled = false, aiModelName, initialPromptRequest }: PromptFormProps) {
   const router = useRouter();
   const t = useTranslations("prompts");
   const tCommon = useTranslations("common");
@@ -109,8 +269,75 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
   const promptType = form.watch("type");
   const structuredFormat = form.watch("structuredFormat");
   const requiresMediaUpload = form.watch("requiresMediaUpload");
+  const promptContent = form.watch("content");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const codeEditorRef = useRef<CodeEditorHandle>(null);
+
+  // Warn user before leaving page with unsaved changes
+  const isDirty = form.formState.isDirty;
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  // Handler for AI builder state changes
+  const handleBuilderStateChange = (newState: {
+    title: string;
+    description: string;
+    content: string;
+    type: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "STRUCTURED";
+    structuredFormat?: "JSON" | "YAML";
+    categoryId?: string;
+    tagIds: string[];
+    isPrivate: boolean;
+    requiresMediaUpload: boolean;
+    requiredMediaType?: "IMAGE" | "VIDEO" | "DOCUMENT";
+    requiredMediaCount?: number;
+  }) => {
+    const opts = { shouldDirty: true, shouldTouch: true };
+    if (newState.title) form.setValue("title", newState.title, opts);
+    if (newState.description) form.setValue("description", newState.description, opts);
+    if (newState.content) form.setValue("content", newState.content, opts);
+    if (newState.type) form.setValue("type", newState.type, opts);
+    if (newState.structuredFormat) form.setValue("structuredFormat", newState.structuredFormat, opts);
+    if (newState.categoryId) form.setValue("categoryId", newState.categoryId, opts);
+    if (newState.tagIds?.length) form.setValue("tagIds", newState.tagIds, opts);
+    form.setValue("isPrivate", newState.isPrivate, opts);
+    form.setValue("requiresMediaUpload", newState.requiresMediaUpload, opts);
+    if (newState.requiredMediaType) form.setValue("requiredMediaType", newState.requiredMediaType, opts);
+    if (newState.requiredMediaCount) form.setValue("requiredMediaCount", newState.requiredMediaCount, opts);
+  };
+
+  // Current state for AI builder
+  const currentBuilderState = {
+    title: form.watch("title"),
+    description: form.watch("description") || "",
+    content: form.watch("content"),
+    type: form.watch("type"),
+    structuredFormat: form.watch("structuredFormat"),
+    categoryId: form.watch("categoryId"),
+    tagIds: form.watch("tagIds"),
+    isPrivate: form.watch("isPrivate"),
+    requiresMediaUpload: form.watch("requiresMediaUpload"),
+    requiredMediaType: form.watch("requiredMediaType"),
+    requiredMediaCount: form.watch("requiredMediaCount"),
+  };
+
+  const getSelectedText = () => {
+    // For text prompts using textarea
+    const textarea = textareaRef.current;
+    if (textarea) {
+      return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+    }
+    return "";
+  };
 
   const insertVariable = (variable: string) => {
     // For structured prompts using Monaco editor
@@ -182,27 +409,40 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Header: Page title + Private Switch */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-lg font-semibold">{mode === "edit" ? t("edit") : t("create")}</h1>
-          <FormField
-            control={form.control}
-            name="isPrivate"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="!mt-0 text-sm font-normal">{t("promptPrivate")}</FormLabel>
-              </FormItem>
-            )}
-          />
-        </div>
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Header: Page title + Private Switch */}
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-lg font-semibold">{mode === "edit" ? t("edit") : t("create")}</h1>
+            <div className="flex items-center gap-3">
+              {aiGenerationEnabled && (
+                <PromptBuilder
+                  availableTags={tags}
+                  availableCategories={categories}
+                  currentState={currentBuilderState}
+                  onStateChange={handleBuilderStateChange}
+                  modelName={aiModelName}
+                  initialPromptRequest={initialPromptRequest}
+                />
+              )}
+              <FormField
+                control={form.control}
+                name="isPrivate"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="!mt-0 text-sm font-normal">{t("promptPrivate")}</FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
         {/* Row 1: Title + Category */}
         <div className="flex items-start gap-4">
@@ -227,7 +467,7 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
                 <FormLabel>{t("promptCategory")}</FormLabel>
                 <Select 
                   onValueChange={(value) => field.onChange(value === "__none__" ? undefined : value)} 
-                  defaultValue={field.value || "__none__"}
+                  value={field.value || "__none__"}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -331,7 +571,7 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
               <FormControl>
                 {promptType === "STRUCTURED" ? (
                   <div className="rounded-md border overflow-hidden">
-                    <VariableToolbar onInsert={insertVariable} />
+                    <VariableToolbar onInsert={insertVariable} getSelectedText={getSelectedText} />
                     <CodeEditor
                       ref={codeEditorRef}
                       value={field.value}
@@ -348,7 +588,7 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
                   </div>
                 ) : (
                   <div className="rounded-md border overflow-hidden">
-                    <VariableToolbar onInsert={insertVariable} />
+                    <VariableToolbar onInsert={insertVariable} getSelectedText={getSelectedText} />
                     <Textarea
                       ref={(el) => {
                         textareaRef.current = el;
@@ -364,9 +604,16 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
                   </div>
                 )}
               </FormControl>
+              <VariableHint content={field.value} onContentChange={(newContent) => form.setValue("content", newContent)} />
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        {/* Variable detection warning */}
+        <VariableWarning
+          content={promptContent}
+          onConvert={(converted) => form.setValue("content", converted)}
         />
 
         {/* Media upload options (shown when requiresMediaUpload is true) */}
@@ -395,20 +642,11 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
           </div>
         )}
 
-        {/* Media URL (for IMAGE/VIDEO/AUDIO/STRUCTURED types) */}
+        {/* Media URL/Upload (for IMAGE/VIDEO/AUDIO/STRUCTURED types) */}
         {(promptType === "IMAGE" || promptType === "VIDEO" || promptType === "AUDIO" || promptType === "STRUCTURED") && (
-          <FormField
-            control={form.control}
-            name="mediaUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("mediaUrl")}</FormLabel>
-                <FormControl>
-                  <Input placeholder={t("mediaUrlPlaceholder")} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <MediaField
+            form={form}
+            t={t}
           />
         )}
 
@@ -461,7 +699,8 @@ export function PromptForm({ categories, tags, initialData, initialContributors 
             {mode === "edit" ? t("update") : t("createButton")} Prompt
           </Button>
         </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </>
   );
 }

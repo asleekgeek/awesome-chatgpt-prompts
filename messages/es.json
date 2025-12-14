@@ -74,6 +74,17 @@
   "prompts": {
     "title": "Prompts",
     "create": "Crear Prompt",
+    "hfDataStudio": {
+      "button": "HF Data Studio",
+      "sqlQuery": "Consulta SQL",
+      "openDataset": "Abrir Dataset",
+      "runQuery": "Ejecutar Consulta en HF",
+      "examples": "Ejemplos",
+      "selectExample": "Selecciona un ejemplo...",
+      "aiGenerate": "Generar con IA",
+      "aiPlaceholder": "Describe la consulta SQL que necesitas...",
+      "generateSql": "Generar SQL"
+    },
     "edit": "Editar Prompt",
     "delete": "Eliminar Prompt",
     "myPrompts": "Mis Prompts",
@@ -95,6 +106,8 @@
     "promptPublic": "Público",
     "feature": "Destacar",
     "featured": "Destacado",
+    "unlist": "Ocultar",
+    "relist": "Mostrar",
     "adminArea": "Área de Administrador",
     "noMorePrompts": "Has llegado al final",
     "loading": "Cargando...",
@@ -161,6 +174,12 @@
     "mediaUrl": "URL del Medio",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "Ingresa una URL al archivo de medios para este prompt",
+    "mediaImage": "Imagen de Medios",
+    "clickToUpload": "Haz clic para subir una imagen",
+    "uploading": "Subiendo...",
+    "maxFileSize": "Tamaño máximo: 5MB (JPEG, PNG, GIF, WebP)",
+    "fileTooLarge": "Archivo demasiado grande. El tamaño máximo es 5MB.",
+    "invalidFileType": "Tipo de archivo inválido. Solo se permiten JPEG, PNG, GIF y WebP.",
     "privateDescription": "Los prompts privados solo son visibles para ti",
     "update": "Actualizar",
     "createButton": "Crear",
@@ -173,7 +192,15 @@
     "previous": "Anterior",
     "next": "Siguiente",
     "mediaLoadError": "No se pudo cargar el medio de este prompt. La URL puede ser inválida o el recurso ya no está disponible.",
-    "mediaUnavailable": "Medio no disponible"
+    "mediaUnavailable": "Medio no disponible",
+    "variableWarningTitle": "Patrones de variables detectados",
+    "variableWarningDescription": "Encontramos marcadores que podrían convertirse en variables dinámicas, permitiendo a los usuarios personalizar valores al usar este prompt.",
+    "convertVariables": "Convertir Todo",
+    "more": "más",
+    "supportedFormat": "Formato soportado",
+    "or": "o",
+    "detectedVariables": "Variables",
+    "clickToEdit": "Clic para editar"
   },
   "changeRequests": {
     "title": "Solicitudes de Cambio",
@@ -321,6 +348,7 @@
       "delete": "Eliminar",
       "pending": "pendientes",
       "generateEmbeddings": "Generar Embeddings",
+      "regenerateEmbeddings": "Regenerar todos los embeddings",
       "embeddingsSuccess": "{count} embeddings generados",
       "embeddingsResult": "Éxito: {success}, Fallidos: {failed}"
     },
@@ -486,7 +514,8 @@
     "search": "Buscar",
     "clear": "Limpiar",
     "found": "{count} encontrados",
-    "aiSearch": "Búsqueda IA"
+    "aiSearch": "Búsqueda IA",
+    "searchTags": "Buscar etiquetas..."
   },
   "user": {
     "profile": "Perfil",
@@ -621,6 +650,20 @@
     "tokens": "tokens",
     "noChanges": "Sin cambios"
   },
+  "heroPromptInput": {
+    "placeholder": "Describe el prompt que quieres crear...",
+    "ariaLabel": "Describe el prompt que quieres crear",
+    "submit": "Crear prompt",
+    "hint": "Haz clic para empezar a crear con IA",
+    "modelName": "Agente de Prompts",
+    "examples": {
+      "codeReview": "Crea un asistente de revisión de código que detecte errores",
+      "emailWriter": "Construye un escritor de emails profesionales para cualquier ocasión",
+      "studyPlanner": "Diseña un generador de planes de estudio personalizados",
+      "recipeGenerator": "Crea un generador de recetas basado en ingredientes disponibles",
+      "interviewCoach": "Crea un coach de preparación para entrevistas"
+    }
+  },
   "notFound": {
     "title": "Página No Encontrada",
     "description": "La página que buscas no existe o ha sido movida.",
@@ -630,6 +673,28 @@
     "browsePrompts": "Explorar Prompts",
     "categories": "Categorías",
     "createPrompt": "Crear Prompt"
+  },
+  "promptBuilder": {
+    "title": "Agente Constructor de Prompts",
+    "openBuilder": "Agente de Prompts",
+    "welcomeTitle": "Crear prompts con IA",
+    "welcomeDescription": "Describe lo que quieres crear y te ayudaré a construirlo paso a paso.",
+    "tryAsking": "Intenta preguntar:",
+    "example1": "Crear un prompt para revisión de código",
+    "example2": "Ayúdame a escribir un prompt para escritura creativa",
+    "example3": "Necesito un prompt para resumir artículos",
+    "inputPlaceholder": "Describe lo que quieres crear...",
+    "thinking": "Pensando...",
+    "errorMessage": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "foundExamples": "Se encontraron {count} prompts similares:",
+    "currentPrompt": "Construyendo:",
+    "stateTitle": "Título",
+    "stateContent": "Contenido",
+    "stateTags": "etiquetas",
+    "editAction1": "Completar campos faltantes, actualizar etiquetas.",
+    "editAction2": "Mejorar variables",
+    "editAction3": "Usar variables",
+    "editAction4": "Convertir a prompt JSON"
   },
   "report": {
     "report": "Reportar",

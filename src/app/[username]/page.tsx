@@ -93,9 +93,10 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
   const isOwner = session?.user?.id === user.id;
   const isUnclaimed = user.email?.endsWith("@unclaimed.prompts.chat") ?? false;
 
-  // Build where clause - show private prompts only if owner
+  // Build where clause - show private prompts only if owner (unlisted prompts are visible on profiles)
   const where = {
     authorId: user.id,
+    deletedAt: null,
     ...(isOwner ? {} : { isPrivate: false }),
   };
 
@@ -180,7 +181,7 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
     contributorCount: p._count?.contributors ?? 0,
   }));
 
-  // Transform pinned prompts - filter out private prompts for non-owners
+  // Transform pinned prompts - filter out private prompts for non-owners (unlisted are visible)
   const pinnedPrompts = pinnedPromptsRaw
     .filter((pp) => isOwner || !pp.prompt.isPrivate)
     .map((pp) => ({
@@ -230,13 +231,13 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
         },
       },
     }),
-    // CRs received on user's prompts (approved only)
+    // CRs received on user's prompts (all statuses for owner, approved only for others)
     db.changeRequest.findMany({
       where: {
         prompt: {
           authorId: user.id,
         },
-        status: "APPROVED",
+        ...(isOwner ? {} : { status: "APPROVED" }),
         authorId: { not: user.id }, // Exclude self-submitted
       },
       orderBy: { createdAt: "desc" },
@@ -272,7 +273,8 @@ export default async function UserProfilePage({ params, searchParams }: UserProf
     ...receivedChangeRequests.map((cr) => ({ ...cr, type: "received" as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const pendingCount = submittedChangeRequests.filter((cr) => cr.status === "PENDING").length;
+  const pendingCount = submittedChangeRequests.filter((cr) => cr.status === "PENDING").length +
+    receivedChangeRequests.filter((cr) => cr.status === "PENDING").length;
   const defaultTab = tab === "changes" ? "changes" : tab === "contributions" ? "contributions" : "prompts";
 
   const statusColors = {

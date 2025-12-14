@@ -74,6 +74,17 @@
   "prompts": {
     "title": "프롬프트",
     "create": "프롬프트 생성",
+    "hfDataStudio": {
+      "button": "HF 데이터 스튜디오",
+      "sqlQuery": "SQL 쿼리",
+      "openDataset": "데이터셋 열기",
+      "runQuery": "HF에서 쿼리 실행",
+      "examples": "예제",
+      "selectExample": "예제 선택...",
+      "aiGenerate": "AI 생성",
+      "aiPlaceholder": "필요한 SQL 쿼리를 설명하세요...",
+      "generateSql": "SQL 생성"
+    },
     "edit": "프롬프트 편집",
     "delete": "프롬프트 삭제",
     "myPrompts": "내 프롬프트",
@@ -97,6 +108,8 @@
     "promptPublic": "공개",
     "feature": "추천",
     "featured": "추천됨",
+    "unlist": "숨기기",
+    "relist": "다시 표시",
     "adminArea": "관리자 영역",
     "types": {
       "text": "텍스트",
@@ -154,6 +167,12 @@
     "mediaUrl": "미디어 URL",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "이 프롬프트의 미디어 파일 URL을 입력하세요",
+    "mediaImage": "미디어 이미지",
+    "clickToUpload": "클릭하여 이미지 업로드",
+    "uploading": "업로드 중...",
+    "maxFileSize": "최대 파일 크기: 5MB (JPEG, PNG, GIF, WebP)",
+    "fileTooLarge": "파일이 너무 큽니다. 최대 크기는 5MB입니다.",
+    "invalidFileType": "잘못된 파일 형식입니다. JPEG, PNG, GIF, WebP만 허용됩니다.",
     "privateDescription": "비공개 프롬프트는 본인만 볼 수 있습니다",
     "requiresMediaUpload": "미디어 업로드 필요",
     "requiresMediaUploadDescription": "이 프롬프트를 사용하려면 미디어 파일을 제공해야 합니다",
@@ -173,7 +192,15 @@
     "previous": "이전",
     "next": "다음",
     "mediaLoadError": "이 프롬프트의 미디어를 불러올 수 없습니다. URL이 잘못되었거나 리소스를 더 이상 사용할 수 없습니다.",
-    "mediaUnavailable": "미디어를 사용할 수 없음"
+    "mediaUnavailable": "미디어를 사용할 수 없음",
+    "variableWarningTitle": "변수와 유사한 패턴 감지됨",
+    "variableWarningDescription": "동적 변수로 변환할 수 있는 플레이스홀더를 발견했습니다. 이를 통해 사용자가 이 프롬프트를 사용할 때 값을 사용자 지정할 수 있습니다.",
+    "convertVariables": "모두 변환",
+    "more": "개 더",
+    "supportedFormat": "지원 형식",
+    "or": "또는",
+    "detectedVariables": "변수",
+    "clickToEdit": "클릭하여 편집"
   },
   "changeRequests": {
     "title": "변경 요청",
@@ -320,6 +347,7 @@
       "confirm": "가져오기",
       "delete": "삭제",
       "generateEmbeddings": "임베딩 생성",
+      "regenerateEmbeddings": "모든 임베딩 재생성",
       "pending": "대기 중",
       "embeddingsSuccess": "{count}개 임베딩 생성됨",
       "embeddingsResult": "생성됨: {success}, 실패: {failed}"
@@ -486,7 +514,8 @@
     "search": "검색",
     "clear": "지우기",
     "found": "{count}개 찾음",
-    "aiSearch": "AI 검색"
+    "aiSearch": "AI 검색",
+    "searchTags": "태그 검색..."
   },
   "user": {
     "profile": "프로필",
@@ -621,6 +650,20 @@
     "tokens": "토큰",
     "noChanges": "변경 없음"
   },
+  "heroPromptInput": {
+    "placeholder": "만들고 싶은 프롬프트를 설명하세요...",
+    "ariaLabel": "만들고 싶은 프롬프트를 설명하세요",
+    "submit": "프롬프트 만들기",
+    "hint": "클릭하여 AI로 만들기 시작",
+    "modelName": "프롬프트 에이전트",
+    "examples": {
+      "codeReview": "버그를 잡아내는 코드 리뷰 어시스턴트 만들기",
+      "emailWriter": "모든 상황에 맞는 전문 이메일 작성기 만들기",
+      "studyPlanner": "맞춤형 학습 계획 생성기 설계",
+      "recipeGenerator": "가용 재료로 레시피 생성기 만들기",
+      "interviewCoach": "면접 준비 코치 만들기"
+    }
+  },
   "notFound": {
     "title": "페이지를 찾을 수 없습니다",
     "description": "찾고 계신 페이지가 존재하지 않거나 이동되었습니다.",
@@ -630,6 +673,28 @@
     "browsePrompts": "프롬프트 둘러보기",
     "categories": "카테고리",
     "createPrompt": "프롬프트 만들기"
+  },
+  "promptBuilder": {
+    "title": "프롬프트 빌딩 에이전트",
+    "openBuilder": "프롬프트 에이전트",
+    "welcomeTitle": "AI로 프롬프트 만들기",
+    "welcomeDescription": "만들고 싶은 것을 설명해 주시면 단계별로 도와드리겠습니다.",
+    "tryAsking": "질문해 보세요:",
+    "example1": "코드 리뷰 프롬프트 만들기",
+    "example2": "창작 글쓰기 프롬프트 작성 도와주세요",
+    "example3": "기사 요약 프롬프트가 필요해요",
+    "inputPlaceholder": "만들고 싶은 것을 설명해 주세요...",
+    "thinking": "생각 중...",
+    "errorMessage": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "foundExamples": "{count}개의 유사한 프롬프트를 찾았습니다:",
+    "currentPrompt": "구축 중:",
+    "stateTitle": "제목",
+    "stateContent": "내용",
+    "stateTags": "태그",
+    "editAction1": "누락된 필드 채우기, 태그 업데이트.",
+    "editAction2": "변수 개선",
+    "editAction3": "변수 사용",
+    "editAction4": "JSON 프롬프트로 변환"
   },
   "report": {
     "report": "신고",

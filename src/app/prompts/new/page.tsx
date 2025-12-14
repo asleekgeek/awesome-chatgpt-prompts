@@ -4,15 +4,21 @@ import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth";
 import { PromptForm } from "@/components/prompts/prompt-form";
 import { db } from "@/lib/db";
+import { isAIGenerationEnabled, getAIModelName } from "@/lib/ai/generation";
 
 export const metadata: Metadata = {
   title: "Create Prompt",
   description: "Create a new prompt",
 };
 
-export default async function NewPromptPage() {
+interface PageProps {
+  searchParams: Promise<{ prompt?: string }>;
+}
+
+export default async function NewPromptPage({ searchParams }: PageProps) {
   const session = await auth();
   const t = await getTranslations("prompts");
+  const { prompt: initialPromptRequest } = await searchParams;
 
   if (!session?.user) {
     redirect("/login");
@@ -34,9 +40,19 @@ export default async function NewPromptPage() {
     orderBy: { name: "asc" },
   });
 
+  // Check if AI generation is enabled
+  const aiGenerationEnabled = await isAIGenerationEnabled();
+  const aiModelName = getAIModelName();
+
   return (
     <div className="container max-w-3xl py-8">
-      <PromptForm categories={categories} tags={tags} />
+      <PromptForm 
+        categories={categories} 
+        tags={tags} 
+        aiGenerationEnabled={aiGenerationEnabled}
+        aiModelName={aiModelName}
+        initialPromptRequest={initialPromptRequest}
+      />
     </div>
   );
 }

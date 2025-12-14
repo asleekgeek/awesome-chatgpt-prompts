@@ -39,6 +39,7 @@ python3 << 'PYTHON_SCRIPT'
 import csv
 import subprocess
 import os
+import io
 
 project_dir = os.environ.get('PROJECT_DIR', '.')
 csv_file = os.path.join(project_dir, 'prompts.csv')
@@ -47,8 +48,10 @@ remote_csv = os.path.join(project_dir, 'prompts.csv.remote')
 # Read existing local prompts (by act title as key)
 local_prompts = {}
 fieldnames = None
-with open(csv_file, 'r') as f:
-    reader = csv.DictReader(f)
+with open(csv_file, 'r', newline='', encoding='utf-8') as f:
+    # Normalize CRLF to LF
+    content = f.read().replace('\r\n', '\n').replace('\r', '\n')
+    reader = csv.DictReader(io.StringIO(content))
     fieldnames = reader.fieldnames
     for row in reader:
         act = row.get('act', '').strip()
@@ -57,10 +60,11 @@ with open(csv_file, 'r') as f:
 
 print(f"Found {len(local_prompts)} existing local prompts")
 
-# Read remote prompts
+# Read remote prompts (normalize CRLF to LF)
 remote_prompts = []
-with open(remote_csv, 'r') as f:
-    reader = csv.DictReader(f)
+with open(remote_csv, 'r', newline='', encoding='utf-8') as f:
+    content = f.read().replace('\r\n', '\n').replace('\r', '\n')
+    reader = csv.DictReader(io.StringIO(content))
     remote_fieldnames = reader.fieldnames
     for row in reader:
         remote_prompts.append(row)
@@ -71,10 +75,19 @@ print(f"Found {len(remote_prompts)} remote prompts")
 if not fieldnames:
     fieldnames = remote_fieldnames
 
-# Find new and updated prompts
+# Build set of remote prompt acts for quick lookup
+remote_acts = set()
+for row in remote_prompts:
+    act = row.get('act', '').strip()
+    if act:
+        remote_acts.add(act)
+
+# Find new, updated, and deleted prompts
 new_prompts = []
 updated_prompts = []
+deleted_prompts = []
 
+# Check for new and updated
 for row in remote_prompts:
     act = row.get('act', '').strip()
     if not act:
@@ -90,10 +103,16 @@ for row in remote_prompts:
         if content_changed or contributors_changed:
             updated_prompts.append((row, local_row))
 
+# Check for deleted (in local but not in remote)
+for act, local_row in local_prompts.items():
+    if act not in remote_acts:
+        deleted_prompts.append(local_row)
+
 print(f"Found {len(new_prompts)} new prompts to add")
 print(f"Found {len(updated_prompts)} updated prompts to modify")
+print(f"Found {len(deleted_prompts)} prompts to remove (unlisted/deleted)")
 
-if not new_prompts and not updated_prompts:
+if not new_prompts and not updated_prompts and not deleted_prompts:
     print("\nNo changes detected. Already up to date!")
     import sys
     sys.exit(2)  # Exit code 2 = no changes
@@ -208,7 +227,49 @@ else:
             co_authors_str = f" (+ {', '.join(co_authors)})" if co_authors else ""
             print(f"[NEW {i}/{len(new_prompts)}] {primary_author}{co_authors_str}: {act}")
     
-    print(f"\nDone! Created {len(new_prompts)} new commits, {len(updated_prompts)} update commits.")
+    # Process deleted prompts (remove from CSV, commit with original author)
+    if deleted_prompts:
+        print("\nRemoving unlisted/deleted prompts...")
+        
+        for i, row in enumerate(deleted_prompts, 1):
+            contributor_field = row.get('contributor', '').strip()
+            act = row.get('act', 'Unknown')
+            
+            primary_author, co_authors = parse_contributors(contributor_field)
+            email = f"{primary_author}@users.noreply.github.com"
+            
+            # Remove this prompt from local_prompts
+            if act in local_prompts:
+                del local_prompts[act]
+            
+            # Rewrite CSV without the deleted prompt
+            with open(csv_file, 'w', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                for remaining_act, remaining_row in local_prompts.items():
+                    writer.writerow(remaining_row)
+            
+            # Stage and commit
+            subprocess.run(['git', 'add', csv_file], check=True)
+            
+            env = os.environ.copy()
+            env['GIT_AUTHOR_NAME'] = primary_author
+            env['GIT_AUTHOR_EMAIL'] = email
+            env['GIT_COMMITTER_NAME'] = primary_author
+            env['GIT_COMMITTER_EMAIL'] = email
+            
+            commit_msg = build_commit_message('Remove', act, co_authors)
+            
+            subprocess.run([
+                'git', 'commit',
+                '-m', commit_msg,
+                f'--author={primary_author} <{email}>'
+            ], env=env, check=True)
+            
+            co_authors_str = f" (+ {', '.join(co_authors)})" if co_authors else ""
+            print(f"[REMOVE {i}/{len(deleted_prompts)}] {primary_author}{co_authors_str}: {act}")
+    
+    print(f"\nDone! Created {len(new_prompts)} new, {len(updated_prompts)} update, {len(deleted_prompts)} remove commits.")
 
 PYTHON_SCRIPT
 PYTHON_EXIT=$?

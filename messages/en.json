@@ -74,6 +74,17 @@
   "prompts": {
     "title": "Prompts",
     "create": "Create Prompt",
+    "hfDataStudio": {
+      "button": "HF Data Studio",
+      "sqlQuery": "SQL Query",
+      "openDataset": "Open Dataset",
+      "runQuery": "Run Query on HF",
+      "examples": "Examples",
+      "selectExample": "Select an example...",
+      "aiGenerate": "AI Generate",
+      "aiPlaceholder": "Describe the SQL query you need...",
+      "generateSql": "Generate SQL"
+    },
     "edit": "Edit Prompt",
     "delete": "Delete Prompt",
     "myPrompts": "My Prompts",
@@ -97,6 +108,8 @@
     "promptPublic": "Public",
     "feature": "Feature",
     "featured": "Featured",
+    "unlist": "Unlist",
+    "relist": "Relist",
     "adminArea": "Admin Area",
     "types": {
       "text": "Text",
@@ -154,6 +167,12 @@
     "mediaUrl": "Media URL",
     "mediaUrlPlaceholder": "https://...",
     "mediaUrlDescription": "Enter a URL to the media file for this prompt",
+    "mediaImage": "Media Image",
+    "clickToUpload": "Click to upload an image",
+    "uploading": "Uploading...",
+    "maxFileSize": "Max file size: 5MB (JPEG, PNG, GIF, WebP)",
+    "fileTooLarge": "File too large. Maximum size is 5MB.",
+    "invalidFileType": "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.",
     "privateDescription": "Private prompts are only visible to you",
     "requiresMediaUpload": "Requires Media Upload",
     "requiresMediaUploadDescription": "Users need to provide media files to use this prompt",
@@ -173,7 +192,15 @@
     "previous": "Previous",
     "next": "Next",
     "mediaLoadError": "The media for this prompt could not be loaded. The URL may be invalid or the resource is no longer available.",
-    "mediaUnavailable": "Media unavailable"
+    "mediaUnavailable": "Media unavailable",
+    "variableWarningTitle": "Variable-like patterns detected",
+    "variableWarningDescription": "We found placeholders that could be converted to dynamic variables, allowing users to customize values when using this prompt.",
+    "convertVariables": "Convert All",
+    "more": "more",
+    "supportedFormat": "Supported format",
+    "or": "or",
+    "detectedVariables": "Variables",
+    "clickToEdit": "Click to edit"
   },
   "changeRequests": {
     "title": "Change Requests",
@@ -320,6 +347,7 @@
       "confirm": "Import",
       "delete": "Delete",
       "generateEmbeddings": "Generate Embeddings",
+      "regenerateEmbeddings": "Regenerate all embeddings",
       "pending": "pending",
       "embeddingsSuccess": "{count} embeddings generated",
       "embeddingsResult": "Generated: {success}, Failed: {failed}"
@@ -486,7 +514,8 @@
     "search": "Search",
     "clear": "Clear",
     "found": "{count} found",
-    "aiSearch": "AI Search"
+    "aiSearch": "AI Search",
+    "searchTags": "Search tags..."
   },
   "user": {
     "profile": "Profile",
@@ -630,6 +659,42 @@
     "browsePrompts": "Browse Prompts",
     "categories": "Categories",
     "createPrompt": "Create Prompt"
+  },
+  "heroPromptInput": {
+    "placeholder": "Describe the prompt you want to build...",
+    "ariaLabel": "Describe the prompt you want to build",
+    "submit": "Create prompt",
+    "hint": "Click to start building with AI",
+    "modelName": "Prompt Agent",
+    "examples": {
+      "codeReview": "Create a code review assistant that catches bugs",
+      "emailWriter": "Build a professional email writer for any occasion",
+      "studyPlanner": "Design a personalized study plan generator",
+      "recipeGenerator": "Make a recipe creator based on available ingredients",
+      "interviewCoach": "Create an interview preparation coach"
+    }
+  },
+  "promptBuilder": {
+    "title": "Prompt Building Agent",
+    "openBuilder": "Prompt Agent",
+    "welcomeTitle": "Build prompts with AI",
+    "welcomeDescription": "Describe what you want to create and I'll help you build it step by step.",
+    "tryAsking": "Try asking:",
+    "example1": "Create a code review prompt",
+    "example2": "Help me write a prompt for creative writing",
+    "example3": "I need a prompt for summarizing articles",
+    "inputPlaceholder": "Describe what you want to create...",
+    "thinking": "Thinking...",
+    "errorMessage": "Something went wrong. Please try again.",
+    "foundExamples": "Found {count} similar prompts:",
+    "currentPrompt": "Building:",
+    "stateTitle": "Title",
+    "stateContent": "Content",
+    "stateTags": "tags",
+    "editAction1": "Fill missing fields, update tags.",
+    "editAction2": "Make variables better",
+    "editAction3": "Use variables",
+    "editAction4": "Convert to JSON prompt"
   },
   "report": {
     "report": "Report",
